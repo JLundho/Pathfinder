@@ -1,5 +1,5 @@
 package graphs;
 
-public class Graphs {
+public class Graphs<K> {
 
 }

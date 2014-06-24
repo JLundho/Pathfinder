@@ -1,15 +1,14 @@
 package graphs;
 
-import java.awt.Component;
-import java.io.Serializable;
-import java.util.*;
 
-public interface Graph<N> extends Serializable {
+public interface Graph<K> {
 	
-	public void add(N node);
-	public void connect(N from, N to, String name, int weight);
-	public String toString();
-	public List<N> getNodes();
+	public void add(K node);
+	public void connect(K from, K to, String name, int weight);
+	public void displayConnections();
+	
+	
+	//public String toString();
 	
 
 }

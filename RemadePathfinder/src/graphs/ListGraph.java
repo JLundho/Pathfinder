@@ -5,32 +5,36 @@ import java.util.*;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
-public class ListGraph<N> extends Graphs implements Graph<N> {
-	Multimap<N, Set<Förbindelse<N>>> nodes = ArrayListMultimap.create();
 
+public class ListGraph<K> extends Graphs implements Graph<K> {
+	Multimap<K, List<Förbindelse>> nodes;
+	
 	public ListGraph(){
-		nodes = ArrayListMultimap.create();
+		nodes  = ArrayListMultimap.create();
 	}
 	
-	public void	add(N node) {
-		nodes.put(node, new HashSet<Förbindelse<N>>());
+	public void	add(K node) {
+		nodes.put(node, new ArrayList<Förbindelse>());
+		System.out.println(node+" har adderats!");
 	}
 	
-	public List<N> getNodes(){
-		return new ArrayList<N>(nodes.keySet());
-	}
-	
-	
-
-	public void connect(N from, N to, String name, int weight) {
-		// TODO Auto-generated method stub
+	public void connect(K from, K to, String name, int weight) {
 		
 	}
+	public void displayConnections() {
+		for (K key : nodes.keys()) 
+		{
+		System.out.print(key+"\n");
+		}
+		
+	}
+
+
 	
 	public String toString(){
 		String s = "";
-		for(N n : nodes.keySet()){
-			System.out.println(n+" har adderats i HashMapen");
+		for(K k : nodes.keySet()){
+			System.out.println(k+" har adderats i HashMapen");
 		}
 		return s;
 	}

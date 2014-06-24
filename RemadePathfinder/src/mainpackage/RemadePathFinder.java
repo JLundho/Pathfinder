@@ -1,21 +1,15 @@
 package mainpackage;
 
-import graphs.Förbindelse;
-import graphs.Graph;
-import graphs.ListGraph;
-import graphs.Nod;
-
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-
-
-
-
-
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.Set;
+
+import graphs.*;
 
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
@@ -24,17 +18,23 @@ import javax.swing.event.MenuListener;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
-public class RemadePathFinder<N> extends JFrame{
+
+
+public class RemadePathFinder extends JFrame{
 	
 	JMenu[] Menu = new JMenu[3]; 
 	JButton[] northButtons = new JButton[5]; 
 	JMenuItem[] arkivItems = new JMenuItem[5];
 	JMenuItem[] operationItems = new JMenuItem[5];
 	private BackgroundPanel background;
-	Multimap<N, Set<Förbindelse<N>>> nodes = ArrayListMultimap.create();
+				
+	Graph g = new ListGraph();
 	
+	private Nod s1, s2;	
 	
-	private Graph<Nod> g;
+	Multimap<Nod, Nod> fromConnections = ArrayListMultimap.create();
+	Multimap<Nod, Nod> toConnections = ArrayListMultimap.create();
+	Multimap<Nod, Set<Förbindelse<Nod>>> nodes = ArrayListMultimap.create();
 	
 	public RemadePathFinder()
 	{
@@ -62,19 +62,24 @@ public class RemadePathFinder<N> extends JFrame{
 		arkivItems[0].addActionListener(new nyFilKnappLyss());
 		
 		
+		
 		//Adderar operationNames till menybaren
 		for (int i = 0; i < miButtonNames.length; i++) {  
 			operationItems[i] = new JMenuItem(miButtonNames[i]); 
 			Menu[1].add(operationItems[i]);
 		}
+		operationItems[1].addActionListener(new VisaFörbindelseKnappLyss());
 		operationItems[2].addActionListener(new NyNodKnappLyss());
-		
+		operationItems[3].addActionListener(new NyNodKnappLyss());
 		
 		for (int i = 0; i < northButtons.length; i++) {  
 			northButtons[i] = new JButton(miButtonNames[i]);
 			north.add(northButtons[i], BorderLayout.NORTH);
 		}
+		northButtons[1].addActionListener(new VisaFörbindelseKnappLyss());
 		northButtons[2].addActionListener(new NyNodKnappLyss());
+		northButtons[3].addActionListener(new NyFörbindelseKnappLyss());
+		//northButtons[3].addActionListener(new NyFörbindelseKnappLyss());
 		
 		for (JMenu j : Menu) {
 			mb.add(j);
@@ -98,24 +103,18 @@ public class RemadePathFinder<N> extends JFrame{
 	class NyNodKnappLyss implements ActionListener {
 		public void actionPerformed(ActionEvent nyNodKnappAve) {
 			nyNodForm nnf = new nyNodForm();
-			Nod newNode = new Nod(nnf.getName());
+
 			
 			try {
 				for (;;) {
 					int nySvar = JOptionPane.showConfirmDialog(RemadePathFinder.this, nnf,"Ny nod", JOptionPane.OK_CANCEL_OPTION);											
+						Nod newNode = new Nod(nnf.getName());
 						if (nySvar == JOptionPane.OK_OPTION) {
-						
-						fadd((N) newNode);
-						
-						
-						
-						//g.add(newNode);
-						
+						g.add(newNode);
 						break;
 					} else {
 
 						System.out.println("Noden har ej adderats!");
-
 						break;
 					}
 				}
@@ -125,6 +124,58 @@ public class RemadePathFinder<N> extends JFrame{
 
 		}
 
+	}
+	
+	class NyFörbindelseKnappLyss implements ActionListener {
+		public void actionPerformed(ActionEvent nyFörbindelseKnappAve) {
+
+				nyFörbindelseForm nff = new nyFörbindelseForm();
+				int nySvar = JOptionPane.showConfirmDialog(null, nff,"Ny förbindelse", JOptionPane.OK_CANCEL_OPTION); 
+				for (;;) {
+					{
+						if (nySvar == JOptionPane.OK_OPTION) 
+						{
+
+							String fardmedel = nff.fardmedelsFalt.getText();
+							String extra = "";
+							try {
+								int tidInt = Integer.parseInt(nff.tidFalt.getText());
+								if (fardmedel.isEmpty() || (fardmedel.matches(".*\\d.*")))
+								{
+									JOptionPane.showMessageDialog(null,"Färdmedelsfältet är tomt eller innehåller siffror!");
+
+									break;
+									
+								} else 
+								{
+									g.connect(s1, s2, fardmedel, tidInt);
+									System.out.println(s1+" och "+s2+" är nu sammanbundna");
+									break;
+								}
+							}
+
+							catch (NumberFormatException e) {
+								if (nff.tidFalt.getText().equals("")) {
+									extra += "och även tomt!";
+
+								}
+								break;
+							}
+
+						} else {
+
+							break;
+
+						}
+					}
+				}
+			}
+		}
+	
+	class VisaFörbindelseKnappLyss implements ActionListener {
+	public void actionPerformed(ActionEvent VisaKnappAve) {
+		g.displayConnections();
+	}
 	}
 	
 	class omKnappLyss implements MenuListener {
@@ -175,9 +226,6 @@ public class RemadePathFinder<N> extends JFrame{
 		//Line2D.double i BackgroundPanel klassen		
 	}
 	
-	
-	
-	
 	class nyFilKnappLyss implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			int resultat = jfc.showOpenDialog(null);
@@ -205,8 +253,35 @@ public class RemadePathFinder<N> extends JFrame{
 	// FORMS ************************************************************
 	// FORMS ************************************************************
 	// FORMS ************************************************************
-		
+	
+	class nyFörbindelseForm extends JPanel {
 
+
+		JTextField tidFalt;
+		JTextField fardmedelsFalt;
+
+		nyFörbindelseForm() {
+			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+
+			JPanel forbindelserad = new JPanel();
+			JPanel rad1 = new JPanel();
+			JPanel rad2 = new JPanel();
+
+			forbindelserad.add(new JLabel("Lägg till ny förbindelse"));
+
+			rad1.add(new JLabel("Tid: "));
+			tidFalt = new JTextField(10);
+			rad1.add(tidFalt);
+
+			rad2.add(new JLabel("Färdmedel: "));
+			fardmedelsFalt = new JTextField(10);
+			rad2.add(fardmedelsFalt);
+
+			add(forbindelserad);
+			add(rad1);
+			add(rad2);
+		}
+	}
 	
 	class nyNodForm extends JPanel {
 		private JTextField nyNodFalt; // Fältet där "från"-förbindelsen anges, oriktad
@@ -237,16 +312,10 @@ public class RemadePathFinder<N> extends JFrame{
 	// METHODS ************************************************************
 	// METHODS ************************************************************
 	
-	public void	fadd(N node) {
-		nodes.put(node, new HashSet<Förbindelse<N>>());
-		System.out.println("Yes!");
-	}
-	
-	
-	
+
+
 	public static void main(String[] args) {
 		new RemadePathFinder();
-		
 	}
 
 
