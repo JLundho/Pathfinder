@@ -54,8 +54,21 @@ public class ListGraph<K> extends Graphs implements Graph<K> {
 		
 	}
 	
+	public void getEdgesBetween(K from, K destination)
+	{
+		for (Förbindelse<K> f : vägar)
+		{
+			if(f.getFrom().equals(from))
+			{
+				System.out.println(f.toString());
+			}
+		}
+				
+	}
+	
 	public boolean pathExists(K from, K destination) 
 	{
+		besökta = new HashSet<K>();
 		besökta.add(from);
 		for (Förbindelse<K> f : vägar)
 		{
@@ -69,6 +82,13 @@ public class ListGraph<K> extends Graphs implements Graph<K> {
 				}
 		return besökta.contains(destination);
 	}
+	
+	public void findAnyPath(K where, K destination)
+	{
+		besökta = new HashSet<K>();
+		
+	}
+	
 	
 	public void dfs(K where, HashSet<K> besökta) 
 	{
