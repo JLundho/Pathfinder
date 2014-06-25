@@ -3,20 +3,15 @@ package mainpackage;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Set;
 
 import graphs.*;
 
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener; 
-
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 
 
 
@@ -28,13 +23,11 @@ public class RemadePathFinder extends JFrame{
 	JMenuItem[] operationItems = new JMenuItem[5];
 	private BackgroundPanel background;
 				
-	Graph g = new ListGraph();
+	Graph<Nod> g = new ListGraph<Nod>();
+
 	
-	private Nod s1, s2;	
-	
-	Multimap<Nod, Nod> fromConnections = ArrayListMultimap.create();
-	Multimap<Nod, Nod> toConnections = ArrayListMultimap.create();
-	Multimap<Nod, Set<Förbindelse<Nod>>> nodes = ArrayListMultimap.create();
+	int xkoordinat;																			//X-koordinat för musklick
+	int ykoordinat;	
 	
 	public RemadePathFinder()
 	{
@@ -68,18 +61,19 @@ public class RemadePathFinder extends JFrame{
 			operationItems[i] = new JMenuItem(miButtonNames[i]); 
 			Menu[1].add(operationItems[i]);
 		}
+		operationItems[0].addActionListener(new HittaVägKnappLyss());
 		operationItems[1].addActionListener(new VisaFörbindelseKnappLyss());
 		operationItems[2].addActionListener(new NyNodKnappLyss());
-		operationItems[3].addActionListener(new NyNodKnappLyss());
+		operationItems[3].addActionListener(new NyFörbindelseKnappLyss());
 		
 		for (int i = 0; i < northButtons.length; i++) {  
 			northButtons[i] = new JButton(miButtonNames[i]);
 			north.add(northButtons[i], BorderLayout.NORTH);
 		}
+		northButtons[0].addActionListener(new HittaVägKnappLyss());
 		northButtons[1].addActionListener(new VisaFörbindelseKnappLyss());
 		northButtons[2].addActionListener(new NyNodKnappLyss());
 		northButtons[3].addActionListener(new NyFörbindelseKnappLyss());
-		//northButtons[3].addActionListener(new NyFörbindelseKnappLyss());
 		
 		for (JMenu j : Menu) {
 			mb.add(j);
@@ -101,26 +95,11 @@ public class RemadePathFinder extends JFrame{
 	// BUTTON LISTENERS ************************************************************
 	
 	class NyNodKnappLyss implements ActionListener {
-		public void actionPerformed(ActionEvent nyNodKnappAve) {
-			nyNodForm nnf = new nyNodForm();
-
+		public void actionPerformed(ActionEvent nyNodKnappAve) 
+		{
 			
-			try {
-				for (;;) {
-					int nySvar = JOptionPane.showConfirmDialog(RemadePathFinder.this, nnf,"Ny nod", JOptionPane.OK_CANCEL_OPTION);											
-						Nod newNode = new Nod(nnf.getName());
-						if (nySvar == JOptionPane.OK_OPTION) {
-						g.add(newNode);
-						break;
-					} else {
-
-						System.out.println("Noden har ej adderats!");
-						break;
-					}
-				}
-			} catch (IndexOutOfBoundsException e) {
-
-			}
+			background.addMouseListener(CenterLyss);
+			setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 
 		}
 
@@ -137,26 +116,23 @@ public class RemadePathFinder extends JFrame{
 						{
 
 							String fardmedel = nff.fardmedelsFalt.getText();
-							String extra = "";
 							try {
 								int tidInt = Integer.parseInt(nff.tidFalt.getText());
 								if (fardmedel.isEmpty() || (fardmedel.matches(".*\\d.*")))
 								{
 									JOptionPane.showMessageDialog(null,"Färdmedelsfältet är tomt eller innehåller siffror!");
-
 									break;
 									
 								} else 
 								{
 									g.connect(s1, s2, fardmedel, tidInt);
-									System.out.println(s1+" och "+s2+" är nu sammanbundna");
 									break;
 								}
 							}
 
 							catch (NumberFormatException e) {
 								if (nff.tidFalt.getText().equals("")) {
-									extra += "och även tomt!";
+									//extra += "och även tomt!";
 
 								}
 								break;
@@ -173,10 +149,21 @@ public class RemadePathFinder extends JFrame{
 		}
 	
 	class VisaFörbindelseKnappLyss implements ActionListener {
-	public void actionPerformed(ActionEvent VisaKnappAve) {
-		g.displayConnections();
+		public void actionPerformed(ActionEvent VisaKnappAve) 
+		{
+		g.getEdgesFrom(s1);
+		g.getEdgesFrom(s2);
+		}
 	}
+	
+	class HittaVägKnappLyss implements ActionListener {
+		public void actionPerformed(ActionEvent HittaVägKnappAve) 
+		{
+		g.pathExists(s1, s2);
+		}
 	}
+	
+
 	
 	class omKnappLyss implements MenuListener {
 		public void menuSelected(MenuEvent e) 
@@ -204,27 +191,6 @@ public class RemadePathFinder extends JFrame{
 	
 	private JFileChooser jfc = new JFileChooser("C:\\");
 	
-	class BackgroundPanel extends JPanel 
-	{
-		private ImageIcon background;
-		public BackgroundPanel(String path)
-		{
-			background = new ImageIcon(path);
-			setLayout(null);
-			Dimension size = new Dimension(background.getIconWidth(),background.getIconHeight());
-			setPreferredSize(size);
-			setMaximumSize(size);
-			setMinimumSize(size);
-		}
-							
-		protected void paintComponent(Graphics g) 
-		{								
-				super.paintComponent(g);
-				g.drawImage(background.getImage(), 0, 0, this);
-		}
-			
-		//Line2D.double i BackgroundPanel klassen		
-	}
 	
 	class nyFilKnappLyss implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
@@ -247,6 +213,136 @@ public class RemadePathFinder extends JFrame{
 			}
 		}
 	}
+
+	// MOUSE LISTENERS ************************************************************
+	// MOUSE LISTENERS ************************************************************
+	// MOUSE LISTENERS ************************************************************
+	// MOUSE LISTENERS ************************************************************
+	
+	
+	
+	CenterLyss CenterLyss = new CenterLyss(); //MouseClickListener som adderas till bakgrunden
+	class CenterLyss extends MouseAdapter
+	{
+		@Override
+		public void mouseClicked(MouseEvent me) 
+		{
+			for (JButton b : northButtons)	
+			{
+				b.setEnabled(true);
+			}
+			xkoordinat = me.getX()-9;
+			ykoordinat = me.getY()-9;
+
+
+			nyNodForm nnf = new nyNodForm();
+			
+				try
+				{
+					for (;;) 
+					{
+						int nySvar = JOptionPane.showConfirmDialog(null, nnf, "Ny nod",
+						JOptionPane.OK_CANCEL_OPTION); 							// Dialogfönster som skapar
+																				// ny deltagare
+						if (nySvar == JOptionPane.OK_OPTION) 
+						{
+							String nodNamn = nnf.nyNodFalt.getText();
+
+							Nod newNode = new Nod(nnf.nyNodFalt.getText(), xkoordinat, ykoordinat);
+							if(nodNamn.isEmpty() || (nodNamn.matches(".*\\d.*")))
+							{
+								JOptionPane.showMessageDialog(null, "Nodnamn är tomt eller innehåller siffror!");
+								setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+								background.removeMouseListener(nkl);
+								break;
+							}
+
+							newNode.addMouseListener(nkl);
+							newNode.setBounds(xkoordinat, ykoordinat, 200, 50);
+							background.add(newNode);
+
+							background.removeMouseListener(CenterLyss);
+							setCursor(Cursor.getDefaultCursor());
+							g.add(newNode);
+					
+							validate();
+							repaint();
+
+							System.out.println("X: "+(newNode.getxkoordinat())+", Y: "+newNode.getykoordinat());
+
+							break;
+						} 
+						else 
+						{
+							background.removeMouseListener(CenterLyss);
+							background.setCursor(Cursor.getDefaultCursor());
+							System.out.println("Noden har ej adderats!");
+
+							break;
+						}
+					}
+				}
+				catch(IndexOutOfBoundsException e)
+				{
+
+				}
+		}
+	}
+	
+	
+	NodKlickLyss nkl = new NodKlickLyss();	
+
+	private Nod s1 = null, s2 = null;
+
+	class NodKlickLyss extends MouseAdapter	//överskuggar "onödiga" metoder från MouseListener.
+	{
+		@Override
+		public void mouseClicked(MouseEvent mev) 
+		{
+			Nod newNode = (Nod)mev.getSource();
+
+													//Om båda är tomma adderas noden till den första minnesplatsen
+			if(mev.getClickCount() < 2)
+				{
+					if (s1 == null && newNode != s2)
+					{
+						s1 = newNode;
+						System.out.println("s1 = "+s1);
+						newNode.setSelected(true);
+					}
+					else if (s2 == null && newNode != s1) 	// Om första minnesplatsen är full och 
+					{										//nya noden inte redan är där adderas den till andra
+						s2 = newNode;
+						System.out.println("s2 = "+s2);
+						newNode.setSelected(true);
+					}
+					else if (s1 == newNode)					//Om första minnesplatsen redan innehar värdet avmarkeras den
+					{
+						s1 = null;
+						System.out.println("s1 är öppen!");
+						newNode.setSelected(false);
+					} 
+					else if (s2 == newNode)					//Om andra minnesplatsen redan innehar värdet avmarkeras den
+					{
+						s2 = null;
+						System.out.println("s2 är öppen");
+						newNode.setSelected(false);
+					}
+
+					else if (s1 != null && s2 != null && newNode != s1 || newNode != s2)					//Om andra minnesplatsen redan innehar värdet avmarkeras den
+					{
+						System.out.println("Båda noderna är valda!");
+					}
+					validate();
+					repaint();
+				}
+			else {
+				System.out.println("Två noder har ej valts!");
+			}
+
+		}
+	}
+
 	
 
 	// FORMS ************************************************************
@@ -302,22 +398,11 @@ public class RemadePathFinder extends JFrame{
 		
 	}
 	
-	// FORMS ************************************************************
-	// FORMS ************************************************************
-	// FORMS ************************************************************
-	// FORMS ************************************************************
-
-	// METHODS ************************************************************
-	// METHODS ************************************************************
-	// METHODS ************************************************************
-	// METHODS ************************************************************
-	
-
 
 	public static void main(String[] args) {
 		new RemadePathFinder();
 	}
 
-
-
 }
+
+
