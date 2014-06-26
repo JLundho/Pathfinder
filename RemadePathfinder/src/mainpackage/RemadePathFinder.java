@@ -151,14 +151,14 @@ public class RemadePathFinder extends JFrame{
 	class VisaFörbindelseKnappLyss implements ActionListener {
 		public void actionPerformed(ActionEvent VisaKnappAve) 
 		{
-		g.getEdgesBetween(s1, s2);
+		g.getEdgesFrom(s1);
 		}
 	}
 	
 	class HittaVägKnappLyss implements ActionListener {
 		public void actionPerformed(ActionEvent HittaVägKnappAve) 
 		{
-		g.pathExists(s1, s2);
+		g.findAnyPath(s1, s2);
 		}
 	}
 	

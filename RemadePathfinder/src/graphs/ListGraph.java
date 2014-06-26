@@ -3,29 +3,27 @@ package graphs;
 import java.util.*;
 import java.util.Map.Entry;
 
+import javax.print.attribute.standard.Destination;
+
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import com.sun.org.apache.xerces.internal.dom.DeepNodeListImpl;
 
 
 public class ListGraph<K> extends Graphs implements Graph<K> {
 	Multimap<K, List<Förbindelse>> nodes;
 	Multimap<K, K> directConnections;
-	Multimap<K, K> connections;
-	HashSet<K> besökta;
-	List <Förbindelse> vägar;
-	
+	List <Förbindelse<K>> vägar;
 	
 	public ListGraph(){
 		nodes  = ArrayListMultimap.create();
 		directConnections  = ArrayListMultimap.create();
-		connections  = ArrayListMultimap.create();
-		besökta = new HashSet<K>();
-		vägar = new ArrayList<Förbindelse>();
+		vägar = new ArrayList<Förbindelse<K>>();
+
 	}
 	
 	public void	add(K node) {
 		nodes.put(node, new ArrayList<Förbindelse>());
-		System.out.println(node+" har adderats!");
 	}
 	
 	public void connect(K from, K destination, String name, int weight) 
@@ -38,107 +36,126 @@ public class ListGraph<K> extends Graphs implements Graph<K> {
 		
 		vägar.add(f1);
 		vägar.add(f2);
-		
-		System.out.println(from+" är nu sammanbunden med destinationen "+destination);
 	}
 	
-	public void getEdgesFrom(K node)
+	public List<K> getEdgesFrom(K node)
 	{
-		for (Map.Entry entry : directConnections.entries()) 
+		List <K> fromVägar = new ArrayList<K>();
+		for(Förbindelse<K> f : vägar)
 		{
-			if(entry.getKey().equals(node))
+			if(f.getFrom().equals(node))
 			{
-				System.out.print(entry+"\n");
+				fromVägar.add(f.getDestination());
 			}
 		}
-		
+		return fromVägar;
 	}
 	
-	public void getEdgesBetween(K from, K destination)
-	{
-		for (Förbindelse<K> f : vägar)
-		{
-			if(f.getFrom().equals(from))
-			{
-				System.out.println(f.toString());
-			}
-		}
-				
-	}
 	
-	public boolean pathExists(K from, K destination) 
+	public List findAnyPath(K from, K destination)
 	{
-		besökta = new HashSet<K>();
+		List<Förbindelse<K>> via = new ArrayList<Förbindelse<K>>();
+		HashSet<K> besökta = new HashSet<K>();
 		besökta.add(from);
-		for (Förbindelse<K> f : vägar)
+		K whereFrom = from;
+		
+		if(pathExists(from, destination))
 		{
-			if (!besökta.contains(destination)) 
+			while(!whereFrom.equals(destination))
 			{
-				dfs(f.getDestination(), besökta);
+			List <K> fromVägar = getEdgesFrom(whereFrom);
+				for(K k : fromVägar)
+				{
+					if(!besökta.contains(k))
+					{
+					if(k.equals(destination))	//Om den angränsande noden är destinationen loopas förbindelser igenom, rätt förbindelse hittas och loopen avslutas
+					{
+						for(Förbindelse f : vägar)
+						{
+							if(f.getFrom().equals(whereFrom) && f.getDestination().equals(destination))
+							{
+								via.add(f);
+								return via;
+
+							}
+						}
+					}
+
+					else if(pathExists(k, destination) && !k.equals(from) && !besökta.contains(k)) //Om en väg finns mellan noden och destinationen samt att noden inte är from-noden
+					{
+						besökta.add(k);
+						for(Förbindelse f : vägar)
+						{
+							if(k.equals(f.getFrom()))
+							{
+								whereFrom = k;
+								if(!via.contains(f))
+								{
+									via.add(f);
+								}
+							}
+						}
+						
+					}
+					else
+					{
+						besökta.add(k);
+					}
+				}
+				}
 			}
 		}
-		if(besökta.contains(destination)){
-			System.out.println("True");
-				}
-		return besökta.contains(destination);
-	}
-	
-	public void findAnyPath(K where, K destination)
-	{
-		besökta = new HashSet<K>();
+		else
+		{
+			System.out.println("Ingen väg finns!");
+			return null;
+		}
+		return via;
+
+
 		
 	}
-	
-	
+
+
+		
+		
 	public void dfs(K where, HashSet<K> besökta) 
 	{
 		besökta.add(where);
 		for (Förbindelse<K> f : vägar)
 		{
-			if (!besökta.contains(f.getDestination())) 
+			K to = f.getDestination();
+			if (!besökta.contains(to)) 
 			{
-				dfs(f.getDestination(), besökta);
+				dfs(to, besökta);
 			}
 		}
 	}
 	
-
 	
+	public boolean pathExists(K from, K destination) 
+	{
+		HashSet<K> besökta = new HashSet<K>();
+		dfs(from, besökta);
+		return besökta.contains(destination);
+	}
 
-	/*
-	private void dfs(K where, Set<Nod> besökta) {
-		besökta.add(where); // Adderar noden som precis besöktes till den
-							// besökta listan
-		for (Förbindelse f : nodes.get(where)) // Loopar genom alla förbindelser
-												// från staden som besöks(granne
-												// till from)
+
+
+	public Förbindelse getEdgesBetween(K from, K destination) {
+		for(Förbindelse f : vägar)
 		{
-			if (!besökta.contains(f.getTo())) // Om staden ej besökts
-												// förut(finns inte i listan
-												// besökta)
-			{ // utförs samma sökning av förbindelser som gjordes på from,
-				// staden läggs sedan till i besökta.
-				dfs(f.getTo(), besökta);
+			if(f.getFrom().equals(from) && f.getDestination().equals(destination))
+			{
+				return f;
 			}
 		}
-	}*/
-	
-	
-	
-	public void displayConnections() {
-		for (Map.Entry entry : connections.entries()) {
-			System.out.print(entry+"\n");
-			}
+		return null;
 		
 	}
 
-	public String toString(){
-		String s = "";
-		for(K k : nodes.keySet()){
-			System.out.println(k+" har adderats i HashMapen");
-		}
-		return s;
-	}
+
+
 
 
 }
